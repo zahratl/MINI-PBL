@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload | Private Storage</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='pbl.css') }}">
+</head>
+
+<body>
+
+    <div class="static-pattern"></div>
+    <div class="hex-pattern"></div>
+
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+    </div>
+
+    <div class="grid-overlay"></div>
+
+    <nav>
+        <div class="nav-container">
+            <div class="logo">PRIVATE STORAGE</div>
+
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="nav-link" style="color:#ff4d4d;">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="menu-section" style="min-height:100vh; padding-top:120px; padding-bottom: 50px;">
+        <div class="container" style="text-align:center; max-width: 1200px; margin: auto;">
+
+            <h1 style="font-family: 'Orbitron', sans-serif; color: cyan; font-size: 32px; margin-bottom: 10px;">
+                WELCOME 
+            </h1>
+
+            <h2 style="font-family: 'Share Tech Mono', monospace; color: #00ffcc; margin-bottom: 30px;">
+                {{ nama_user }}!
+            </h2>
+
+            <div style="max-width: 600px; margin: 0 auto 40px auto;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div style="
+                        padding: 15px; 
+                        margin-bottom: 10px; 
+                        border: 1px solid {{ '#00ffcc' if category == 'success' else '#ff4d4d' }}; 
+                        background: rgba(0,0,0,0.8); 
+                        color: {{ '#00ffcc' if category == 'success' else '#ff4d4d' }};
+                        font-family: 'Share Tech Mono', monospace;">
+                        {{ message }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+            </div>
+
+            <div class="dashboard-grid" style="
+                display: grid; 
+                grid-template-columns: 1fr 1.8fr; /* Kanan diperlebar sedikit untuk muat tombol delete */
+                gap: 40px; 
+                align-items: start;
+                text-align: left;
+            ">
+
+                <div class="menu-category" style="width: 100%; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                    
+                    <p style="font-size:15px; opacity:0.9; margin-bottom:30px; text-align: center;">
+                        Status: <strong>Connected</strong> <br>
+                        <span style="color: #00ffcc;">Private Storage Database</span>
+                    </p>
+
+                    <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" style="text-align: center;">
+                        
+                        <div style="display:grid; gap:20px; justify-content: center;">
+                            <input type="file" id="fileInput" name="file" style="display: none;" onchange="handleFileSelect(this)" required>
+
+                            <label for="fileInput" class="specialty-card" style="cursor: pointer; display: block; margin: 0 auto; width: 100%;">
+                                <div class="specialty-icon">📂</div>
+                                <h3 id="statusText">Select File</h3>
+                                <p>Click here to choose</p>
+                            </label>
+                        </div>
+                        
+                        <p id="fileNameDisplay" style="margin-top: 15px; color: cyan; font-family: 'Share Tech Mono', monospace; min-height: 20px; font-size: 1em; word-break: break-all;"></p>
+                        
+                        <button type="submit" id="uploadBtn" style="
+                            display: none; 
+                            margin-top: 15px; 
+                            padding: 12px 30px; 
+                            background-color: cyan; 
+                            border: none; 
+                            font-weight: bold; 
+                            cursor: pointer;
+                            font-family: 'Orbitron', sans-serif;
+                            box-shadow: 0 0 15px cyan;
+                            transition: transform 0.2s;
+                            width: 100%;">
+                            CONFIRM UPLOAD 🚀
+                        </button>
+                    </form>
+                </div>
+
+                <div class="menu-category" style="width: 100%; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                    <h3 style="color: cyan; font-family: 'Orbitron'; margin-bottom: 20px; text-align: center;">YOUR SECURE FILES</h3>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; color: white; margin-top: 10px;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid cyan;">
+                                    <th style="padding: 15px; text-align: left;">Filename</th>
+                                    <th style="padding: 15px; text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in files %}
+                                <tr style="border-bottom: 1px solid #333; font-family: 'Share Tech Mono', monospace;">
+                                    
+                                    <td style="padding: 15px;">
+                                        <a href="{{ url_for('download_file', filename=file.filename) }}" 
+                                           target="_blank"
+                                           style="color: white; text-decoration: none; border-bottom: 1px dotted cyan; transition: color 0.3s;">
+                                           📄 {{ file.filename }}
+                                        </a>
+                                    </td>
+
+                                    <td style="padding: 15px; text-align: center; white-space: nowrap;">
+                                        
+                                        <a href="{{ url_for('encrypt_file', filename=file.filename) }}" style="text-decoration: none; margin-right: 8px;">
+                                            <span style="color: #ff9f43; cursor:pointer; font-weight:bold; font-size: 0.9em;">LOCK 🔒</span> 
+                                        </a>
+                                        
+                                        <span style="color: grey;">|</span> 
+                                        
+                                        <a href="{{ url_for('decrypt_file', filename=file.filename) }}" style="text-decoration: none; margin-left: 8px; margin-right: 8px;">
+                                            <span style="color: #00ffcc; cursor:pointer; font-weight:bold; font-size: 0.9em;">UNLOCK 🔓</span>
+                                        </a>
+
+                                        <span style="color: grey;">|</span>
+
+                                        <a href="{{ url_for('delete_file', filename=file.filename) }}" 
+                                           onclick="return confirm('WARNING: Are you sure you want to PERMANENTLY delete this file?');"
+                                           style="text-decoration: none; margin-left: 8px;">
+                                            <span style="color: #ff3333; cursor:pointer; font-weight:bold; font-size: 0.9em;">DEL 🗑️</span>
+                                        </a>
+
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="2" style="padding:20px; color:grey; text-align: center;">Belum ada file yang diupload.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div> </div>
+    </section>
+
+    <style>
+        /* Responsif untuk HP */
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+
+    <script src="{{ url_for('static', filename='pbl.js') }}"></script>
+
+    <script>
+        function handleFileSelect(input) {
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const statusText = document.getElementById('statusText');
+
+            if (input.files && input.files.length > 0) {
+                const fileName = input.files[0].name;
+                fileNameDisplay.innerHTML = "Selected: <span style='color:white;'>" + fileName + "</span>";
+                statusText.innerText = "File Ready";
+                statusText.style.color = "#00ffcc";
+                uploadBtn.style.display = "inline-block";
+            } else {
+                fileNameDisplay.textContent = "";
+                statusText.innerText = "Select File";
+                statusText.style.color = "white";
+                uploadBtn.style.display = "none";
+            }
+        }
+    </script>
+
+</body>
+</html>

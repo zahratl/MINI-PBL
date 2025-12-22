@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini PBL - Private Storage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='pbl.css') }}">
+</head>
+<body>
+    <!-- Static patterns -->
+    <div class="static-pattern"></div>
+    <div class="hex-pattern"></div>
+    
+    <!-- Animated background shapes -->
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+    </div>
+    
+    <!-- Grid overlay -->
+    <div class="grid-overlay"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">PRIVAGE STORAGE</div>
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="home">
+        <h1 class="hero-title">PRIVATE STORAGE</h1>
+        <p class="hero-subtitle">PENYIMPANAN FILE BERBASIS PRIVATE STORAGE</p>
+        <div class="hero-buttons">
+            <a href="#menu" class="cta-button">LOGIN</a>
+            <a href="#about" class="cta-button cta-secondary">View About Us</a>
+        </div>
+    </section>
+
+    <!-- Login Section -->
+    <section class="menu-section" id="menu" style="padding: 50px 0;">
+        <div class="container">
+            <div class="menu-category">
+                <h3>LOGIN</h3>
+
+                <div style="max-width: 350px; margin-bottom: 15px;">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div style="padding: 10px; border-radius: 5px; color: #fff; font-weight: bold; text-align: center; margin-bottom: 10px;
+                                    background-color: {{ '#28a745' if category == 'success' else '#dc3545' }};">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+               <form action="{{ url_for('login') }}" method="POST" class="login-form" style="display:flex; flex-direction:column; gap:15px; max-width:350px;">
+                <label>
+                    <span>Email</span>
+                    <input type="email" name="email" placeholder="Enter your email" required style="padding:10px; border-radius:8px; border:1px solid #999;">
+                </label>
+
+                <label>
+                    <span>Password</span>
+                    <input type="password" name="password" placeholder="Enter your password" required style="padding:10px; border-radius:8px; border:1px solid #999;">
+                </label>
+
+                <button type="submit" style="padding:12px; background:#00d2ff; color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer;">
+                    Login
+                </button>
+
+                <p style="margin-top:10px; font-size:14px;">
+                    Don't have an account?
+                    <a href="#register" style="color:#00d2ff;">Register now</a>
+                </p>
+
+                <p style="font-size:13px; text-align:right;">
+                </p>
+            </form>
+
+            </div>
+        </div>
+    </section>
+
+  <section class="menu-section" id="register" style="padding: 50px 0;">
+    <div class="container">
+        <div class="menu-category">
+            <h3>REGISTER</h3>
+            
+            <div style="max-width: 350px; margin-bottom: 15px;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div style="padding: 10px; border-radius: 5px; color: #fff; font-weight: bold; text-align: center; margin-bottom: 10px;
+                                background-color: {{ '#28a745' if category == 'success' else '#dc3545' }};">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <form action="{{ url_for('register') }}" method="POST" class="register-form" style="display:flex; flex-direction:column; gap:15px; max-width:350px;">
+                <label>
+                    <span>Full Name</span>
+                    <input type="text" name="username" placeholder="Enter your full name" required style="padding:10px; border-radius:8px; border:1px solid #999;">
+                </label>
+
+                <label>
+                    <span>Email</span>
+                    <input type="email" name="email" placeholder="Enter your email" required style="padding:10px; border-radius:8px; border:1px solid #999;">
+                </label>
+
+                <label>
+                    <span>Password</span>
+                    <input type="password" name="password" placeholder="Create a password" required style="padding:10px; border-radius:8px; border:1px solid #999;">
+                </label>
+
+                <button type="submit" style="padding:12px; background:#00ff87; color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer;">
+                    Register
+                </button>
+
+                <p style="margin-top:10px; font-size:14px;">
+                    Already have an account?
+                    <a href="#menu" style="color:#00ff87;">Login here</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</section>
+
+
+
+    <!-- About Section -->
+    <section id="about">
+        <h2 class="glitch">ABOUT US</h2>
+        
+        <div class="about-tabs">
+        </div>
+        
+        <div id="story" class="tab-content active">
+            <div class="about-content">
+                <div class="about-text">
+                    <h3>What is Private Storage</h3>
+                    <p>Private Storage is a secure digital space designed to store, manage, and protect personal or sensitive files.
+                    It allows users to upload their data privately without worrying about unauthorized access.</p>
+                    <br>
+                    <p> Built with security as a top priority, Private Storage implements proper authentication and access control
+                    to ensure that only authorized users can access their files.</p>
+                    <br>
+                    <p> This platform is ideal for individuals who value privacy, data security, and simplicity
+                    in managing their digital assets.</p>
+            </div>
+        </div>
+    
+        
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <h2 class="glitch">CONTACT</h2>
+            
+            <div class="contact-info">
+                <h3>Connect With Us</h3>
+                <div class="info-item">
+                    <div class="info-icon">📍</div>
+                    <div class="info-text">
+                        <strong>Location</strong>
+                        <br> Ahmad Yani Street, Tlk. Tering, Batam Kota District, Batam City, Riau Islands 29461, Indonesia<br>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">📞</div>
+                    <div class="info-text">
+                        <strong>Phone</strong><br>
+                        +6281929580739
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">✉️</div>
+                    <div class="info-text">
+                        <strong>Email</strong><br>
+                    nadiahidayatullah9@gmail.com
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">🕐</div>
+                    <div class="info-text">
+                        <strong>Hours</strong><br>
+                        Mon-Fri: 6:00 AM - 7:00 PM<br>
+                        Sat-Sun: 7:00 AM - 12:00 AM
+                    </div>
+                </div>
+                
+                <div class="social-links">
+                    <a href="#" class="social-link">f</a>
+                    <a href="#" class="social-link">t</a>
+                    <a href="#" class="social-link">i</a>
+                    <a href="#" class="social-link">g</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#privacy">Privacy Policy</a>
+                <a href="#terms">Terms of Service</a>
+                <a href="#careers">Careers</a>
+            </div>
+            <div class="copyright">
+                © 2026 Nexus Brew. All rights reserved.
+            </div>
+        </div>
+    </footer>
+    
+     <script src="{{ url_for('static', filename='pbl.js') }}"></script>
+</body>
+</html>
