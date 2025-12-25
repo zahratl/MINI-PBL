@@ -32,9 +32,7 @@
             <div class="logo">PRIVATE STORAGE</div>
 
             <div class="menu-toggle" onclick="toggleMenu()">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </div>
 
             <ul class="nav-links">
@@ -47,25 +45,14 @@
     <section class="menu-section" style="min-height:100vh; padding-top:120px; padding-bottom: 50px;">
         <div class="container" style="text-align:center; max-width: 1200px; margin: auto;">
 
-            <h1 style="font-family: 'Orbitron', sans-serif; color: cyan; font-size: 32px; margin-bottom: 10px;">
-                WELCOME 
-            </h1>
-
-            <h2 style="font-family: 'Share Tech Mono', monospace; color: #00ffcc; margin-bottom: 30px;">
-                {{ nama_user }}!
-            </h2>
+            <h1 style="font-family: 'Orbitron', sans-serif; color: cyan; font-size: 32px; margin-bottom: 10px;">WELCOME</h1>
+            <h2 style="font-family: 'Share Tech Mono', monospace; color: #00ffcc; margin-bottom: 30px;">{{ nama_user }}!</h2>
 
             <div style="max-width: 600px; margin: 0 auto 40px auto;">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                   {% if messages %}
                     {% for category, message in messages %}
-                      <div style="
-                        padding: 15px; 
-                        margin-bottom: 10px; 
-                        border: 1px solid {{ '#00ffcc' if category == 'success' else '#ff4d4d' }}; 
-                        background: rgba(0,0,0,0.8); 
-                        color: {{ '#00ffcc' if category == 'success' else '#ff4d4d' }};
-                        font-family: 'Share Tech Mono', monospace;">
+                      <div style="padding: 15px; margin-bottom: 10px; border: 1px solid {{ '#00ffcc' if category == 'success' else '#ff4d4d' }}; background: rgba(0,0,0,0.8); color: {{ '#00ffcc' if category == 'success' else '#ff4d4d' }}; font-family: 'Share Tech Mono', monospace;">
                         {{ message }}
                       </div>
                     {% endfor %}
@@ -73,47 +60,25 @@
                 {% endwith %}
             </div>
 
-            <div class="dashboard-grid" style="
-                display: grid; 
-                grid-template-columns: 1fr 1.8fr; /* Kanan diperlebar sedikit untuk muat tombol delete */
-                gap: 40px; 
-                align-items: start;
-                text-align: left;
-            ">
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 40px; align-items: start; text-align: left;">
 
                 <div class="menu-category" style="width: 100%; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 10px;">
-                    
                     <p style="font-size:15px; opacity:0.9; margin-bottom:30px; text-align: center;">
                         Status: <strong>Connected</strong> <br>
                         <span style="color: #00ffcc;">Private Storage Database</span>
                     </p>
 
                     <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" style="text-align: center;">
-                        
                         <div style="display:grid; gap:20px; justify-content: center;">
                             <input type="file" id="fileInput" name="file" style="display: none;" onchange="handleFileSelect(this)" required>
-
                             <label for="fileInput" class="specialty-card" style="cursor: pointer; display: block; margin: 0 auto; width: 100%;">
                                 <div class="specialty-icon">📂</div>
                                 <h3 id="statusText">Select File</h3>
                                 <p>Click here to choose</p>
                             </label>
                         </div>
-                        
                         <p id="fileNameDisplay" style="margin-top: 15px; color: cyan; font-family: 'Share Tech Mono', monospace; min-height: 20px; font-size: 1em; word-break: break-all;"></p>
-                        
-                        <button type="submit" id="uploadBtn" style="
-                            display: none; 
-                            margin-top: 15px; 
-                            padding: 12px 30px; 
-                            background-color: cyan; 
-                            border: none; 
-                            font-weight: bold; 
-                            cursor: pointer;
-                            font-family: 'Orbitron', sans-serif;
-                            box-shadow: 0 0 15px cyan;
-                            transition: transform 0.2s;
-                            width: 100%;">
+                        <button type="submit" id="uploadBtn" style="display: none; margin-top: 15px; padding: 12px 30px; background-color: cyan; border: none; font-weight: bold; cursor: pointer; font-family: 'Orbitron', sans-serif; box-shadow: 0 0 15px cyan; transition: transform 0.2s; width: 100%;">
                             CONFIRM UPLOAD 🚀
                         </button>
                     </form>
@@ -135,33 +100,44 @@
                                 <tr style="border-bottom: 1px solid #333; font-family: 'Share Tech Mono', monospace;">
                                     
                                     <td style="padding: 15px;">
-                                        <a href="{{ url_for('download_file', filename=file.filename) }}" 
-                                           target="_blank"
-                                           style="color: white; text-decoration: none; border-bottom: 1px dotted cyan; transition: color 0.3s;">
+                                        <a href="{{ url_for('download_file', filename=file.filename) }}" target="_blank" style="color: white; text-decoration: none; border-bottom: 1px dotted cyan; transition: color 0.3s;">
                                            📄 {{ file.filename }}
                                         </a>
                                     </td>
 
                                     <td style="padding: 15px; text-align: center; white-space: nowrap;">
-                                        
-                                        <a href="{{ url_for('encrypt_file', filename=file.filename) }}" style="text-decoration: none; margin-right: 8px;">
-                                            <span style="color: #ff9f43; cursor:pointer; font-weight:bold; font-size: 0.9em;">LOCK 🔒</span> 
-                                        </a>
-                                        
-                                        <span style="color: grey;">|</span> 
-                                        
-                                        <a href="{{ url_for('decrypt_file', filename=file.filename) }}" style="text-decoration: none; margin-left: 8px; margin-right: 8px;">
-                                            <span style="color: #00ffcc; cursor:pointer; font-weight:bold; font-size: 0.9em;">UNLOCK 🔓</span>
-                                        </a>
+                                        <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                            
+                                            {% if file.filename.endswith('.enc') %}
+                                                
+                                                <button class="action-btn btn-lock active" style="cursor: default;">
+                                                    LOCKED 🔒
+                                                </button>
+                                                
+                                                <button onclick="openPinModal('{{ url_for('decrypt_file', filename=file.filename) }}', 'unlock')" 
+                                                        class="action-btn btn-unlock">
+                                                    UNLOCK 🔓
+                                                </button>
 
-                                        <span style="color: grey;">|</span>
+                                            {% else %}
+                                                
+                                                <button onclick="openPinModal('{{ url_for('encrypt_file', filename=file.filename) }}', 'lock')" 
+                                                        class="action-btn btn-lock">
+                                                    LOCK 🔒
+                                                </button>
+                                                
+                                                <button class="action-btn btn-unlock active" style="cursor: default;">
+                                                    OPEN 🔓
+                                                </button>
 
-                                        <a href="{{ url_for('delete_file', filename=file.filename) }}" 
-                                           onclick="return confirm('WARNING: Are you sure you want to PERMANENTLY delete this file?');"
-                                           style="text-decoration: none; margin-left: 8px;">
-                                            <span style="color: #ff3333; cursor:pointer; font-weight:bold; font-size: 0.9em;">DEL 🗑️</span>
-                                        </a>
+                                            {% endif %}
 
+                                            <a href="{{ url_for('delete_file', filename=file.filename) }}" 
+                                               onclick="return confirm('WARNING: Are you sure you want to PERMANENTLY delete this file?');"
+                                               class="action-btn btn-del">
+                                                DEL 🗑️
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% else %}
@@ -172,37 +148,127 @@
                     </div>
                 </div>
 
-            </div> </div>
+            </div> 
+        </div>
     </section>
 
+    <div id="pinModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+        <div style="background: rgba(20, 20, 20, 0.95); margin: 15% auto; padding: 30px; border: 1px solid cyan; width: 320px; border-radius: 10px; text-align: center; box-shadow: 0 0 20px cyan;">
+            
+            <h3 style="color: cyan; font-family: 'Orbitron'; margin-bottom: 20px;" id="modalTitle">SECURITY CHECK</h3>
+            
+            <form id="pinForm" method="POST" action="">
+                <p style="color: white; font-family: 'Share Tech Mono'; margin-bottom: 10px;">Enter Your Secret PIN:</p>
+                
+                <input type="password" name="pin" required 
+                       style="width: 100%; padding: 12px; margin-bottom: 25px; background: #000; border: 1px solid cyan; color: cyan; font-family: 'Orbitron'; text-align: center; font-size: 20px; border-radius: 5px; outline: none;" 
+                       placeholder="****" autocomplete="off">
+                
+                <div style="display: flex; justify-content: space-between;">
+                    <button type="button" onclick="closeModal()" 
+                            style="background: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; font-family: 'Orbitron';">
+                        CANCEL
+                    </button>
+                    <button type="submit" 
+                            style="background: cyan; color: black; border: none; padding: 10px 25px; cursor: pointer; font-weight: bold; border-radius: 5px; font-family: 'Orbitron'; box-shadow: 0 0 10px cyan;">
+                        PROCESS
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <style>
-        /* Responsif untuk HP */
-        @media (max-width: 900px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr !important;
-            }
+        /* Responsive */
+        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr !important; } }
+
+        /* Tombol Dasar (Garis/Outline) */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85em;
+            font-weight: bold;
+            border: 1px solid;
+            border-radius: 4px;
+            background: transparent;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+
+        /* Warna Tombol */
+        .btn-lock { color: #ff9f43; border-color: #ff9f43; }   
+        .btn-unlock { color: #00ffcc; border-color: #00ffcc; } 
+        .btn-del { color: #ff3333; border-color: #ff3333; }    
+
+        /* Hover Effect */
+        .action-btn:hover { transform: translateY(-2px); }
+        .btn-lock:hover { box-shadow: 0 0 8px #ff9f43; background: rgba(255, 159, 67, 0.1); }
+        .btn-unlock:hover { box-shadow: 0 0 8px #00ffcc; background: rgba(0, 255, 204, 0.1); }
+        .btn-del:hover { background: #ff3333; color: white; box-shadow: 0 0 10px #ff3333; }
+
+        /* Status AKTIF/MENYALA (Solid) */
+        .btn-lock.active {
+            background: #ff9f43; color: #1e1e1e;
+            box-shadow: 0 0 15px #ff9f43; border-color: #ff9f43;
+        }
+        .btn-unlock.active {
+            background: #00ffcc; color: #1e1e1e;
+            box-shadow: 0 0 15px #00ffcc; border-color: #00ffcc;
         }
     </style>
 
     <script src="{{ url_for('static', filename='pbl.js') }}"></script>
-
     <script>
         function handleFileSelect(input) {
             const fileNameDisplay = document.getElementById('fileNameDisplay');
             const uploadBtn = document.getElementById('uploadBtn');
             const statusText = document.getElementById('statusText');
-
             if (input.files && input.files.length > 0) {
-                const fileName = input.files[0].name;
-                fileNameDisplay.innerHTML = "Selected: <span style='color:white;'>" + fileName + "</span>";
-                statusText.innerText = "File Ready";
-                statusText.style.color = "#00ffcc";
-                uploadBtn.style.display = "inline-block";
+                fileNameDisplay.innerHTML = "Selected: <span style='color:white;'>" + input.files[0].name + "</span>";
+                statusText.innerText = "File Ready"; statusText.style.color = "#00ffcc"; uploadBtn.style.display = "inline-block";
             } else {
-                fileNameDisplay.textContent = "";
-                statusText.innerText = "Select File";
-                statusText.style.color = "white";
-                uploadBtn.style.display = "none";
+                fileNameDisplay.textContent = ""; statusText.innerText = "Select File"; statusText.style.color = "white"; uploadBtn.style.display = "none";
+            }
+        }
+
+        // --- FUNGSI MODAL POPUP ---
+        function openPinModal(actionUrl, type) {
+            const modal = document.getElementById('pinModal');
+            const form = document.getElementById('pinForm');
+            const title = document.getElementById('modalTitle');
+            
+            // Set tujuan form (encrypt atau decrypt)
+            form.action = actionUrl;
+            
+            // Reset input field agar kosong setiap dibuka
+            form.querySelector('input[name="pin"]').value = "";
+            
+            if (type === 'lock') {
+                title.innerText = "LOCK FILE 🔒";
+                title.style.color = "#ff9f43"; // Orange
+            } else {
+                title.innerText = "UNLOCK FILE 🔓";
+                title.style.color = "#00ffcc"; // Cyan
+            }
+            
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('pinModal').style.display = "none";
+        }
+
+        // Tutup jika klik diluar area modal
+        window.onclick = function(event) {
+            const modal = document.getElementById('pinModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
             }
         }
     </script>

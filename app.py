@@ -1,37 +1,45 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 from werkzeug.utils import secure_filename
 from flask_bcrypt import Bcrypt
-from cryptography.fernet import Fernet # Import library enkripsi
+# Import Library Kriptografi Baru
+from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import base64
 import pymysql
 import os
-
-
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Menentukan folder upload. Pastikan folder ini ada!
+# Menentukan folder upload
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# --- SETUP KUNCI ENKRIPSI ---
-# Cek apakah file kunci sudah ada, jika belum, buat baru.
-if not os.path.exists("secret.key"):
-    key = Fernet.generate_key()
-    with open("secret.key", "wb") as key_file:
-        key_file.write(key)
-
-# Muat kunci agar bisa dipakai
-def load_key():
-    return open("secret.key", "rb").read()
-
-key = load_key()
-cipher = Fernet(key)
-# -----------------------------
+# Pastikan folder ada
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 bcrypt = Bcrypt(app)
 
-# Koneksi ke MySQL (XAMPP)
+# --- FUNGSI GENERATE KEY DARI PIN USER ---
+def generate_key_from_pin(pin, salt=None):
+    """
+    Mengubah PIN user menjadi Kunci Fernet 32-byte yang aman.
+    """
+    if salt is None:
+        salt = os.urandom(16) # Buat salt acak 16 byte jika enkripsi baru
+    
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(pin.encode()))
+    return key, salt
+
+# Koneksi ke MySQL
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
@@ -54,27 +62,20 @@ def register():
     username = request.form.get('username')
     email = request.form.get('email')
     password = request.form.get('password')
-
-    # Enkripsi password
     pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-
-        cur.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
-                    (username, email, pw_hash))
+        cur.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", (username, email, pw_hash))
         conn.commit()
         cur.close()
         conn.close()
-
         flash('Registrasi Berhasil! Silakan Login.', 'success')
         return redirect(url_for('home') + "#menu")
-
     except pymysql.err.IntegrityError:
         flash('Email sudah terdaftar!', 'danger')
         return redirect(url_for('home') + "#register")
-
     except Exception as e:
         flash(f'Error: {e}', 'danger')
         return redirect(url_for('home') + "#register")
@@ -84,7 +85,6 @@ def register():
 def login():
     email = request.form.get('email')
     password = request.form.get('password')
-
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT * FROM users WHERE email = %s", (email,))
@@ -100,7 +100,7 @@ def login():
         flash('Email atau password salah!', 'danger')
         return redirect(url_for('home') + "#menu")
 
-# UPLOAD HALAMAN GET (DASHBOARD)
+# DASHBOARD UPLOAD
 @app.route('/upload')
 def upload():
     if 'loggedin' not in session:
@@ -108,42 +108,30 @@ def upload():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT filename FROM upload") # Pastikan nama tabel benar 'upload'
+    cur.execute("SELECT filename FROM upload")
     files = cur.fetchall()
     cur.close()
     conn.close()
 
-    return render_template(
-        'upload.html',
-        nama_user=session['username'],
-        files=files
-    )
+    return render_template('upload.html', nama_user=session['username'], files=files)
 
 # UPLOAD FILE POST
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
     if 'loggedin' not in session:
         return redirect(url_for('home'))
-
     if 'file' not in request.files:
         return redirect(url_for('upload'))
-
     file = request.files['file']
     if file.filename == '':
         return redirect(url_for('upload'))
 
     filename = secure_filename(file.filename)
-
-    # simpan ke folder
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-    # simpan ke database
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO upload (filename) VALUES (%s)",
-        (filename,)
-    )
+    cur.execute("INSERT INTO upload (filename) VALUES (%s)", (filename,))
     conn.commit()
     cur.close()
     conn.close()
@@ -151,75 +139,121 @@ def upload_file():
     flash('File berhasil diupload!', 'success')
     return redirect(url_for('upload'))
 
-# --- FITUR BARU: DOWNLOAD / BUKA FILE ---
+# DOWNLOAD FILE
 @app.route('/uploads/<filename>')
 def download_file(filename):
     if 'loggedin' not in session:
         return redirect(url_for('home'))
-        
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# --- FITUR BARU: ENKRIPSI (LOCK) ---
-@app.route('/encrypt/<filename>')
+# --- ENKRIPSI (LOCK) DENGAN PIN USER ---
+@app.route('/encrypt/<filename>', methods=['POST'])
 def encrypt_file(filename):
     if 'loggedin' not in session:
         return redirect(url_for('home'))
     
+    pin = request.form.get('pin') # Ambil PIN dari Modal
+    if not pin:
+        flash('PIN diperlukan untuk mengunci file!', 'danger')
+        return redirect(url_for('upload'))
+
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     
     try:
-        # Baca data asli
+        # 1. Buat Kunci dari PIN + Salt Baru
+        key, salt = generate_key_from_pin(pin)
+        cipher = Fernet(key)
+
+        # 2. Baca data asli
         with open(file_path, "rb") as file:
             file_data = file.read()
         
-        # Enkripsi data
+        # 3. Enkripsi
         encrypted_data = cipher.encrypt(file_data)
         
-        # Timpa file dengan data terenkripsi
-        with open(file_path, "wb") as file:
-            file.write(encrypted_data)
+        # 4. Simpan: SALT (16 byte awal) + Data Terenkripsi
+        # Kita simpan salt di dalam file supaya nanti bisa dipakai dekripsi
+        with open(file_path + ".enc", "wb") as file:
+            file.write(salt + encrypted_data)
             
-        flash(f'File {filename} berhasil dikunci (LOCKED)! 🔒', 'success')
+        # 5. Hapus file asli & Update Database
+        os.remove(file_path)
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE upload SET filename = %s WHERE filename = %s", (filename + ".enc", filename))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash(f'File terkunci! Ingat PIN anda: {pin}', 'success')
         
     except Exception as e:
         flash(f'Gagal mengenkripsi: {str(e)}', 'danger')
 
     return redirect(url_for('upload'))
 
-# --- FITUR BARU: DESKRIPSI (UNLOCK) ---
-@app.route('/decrypt/<filename>')
+# --- DEKRIPSI (UNLOCK) DENGAN PIN USER ---
+@app.route('/decrypt/<filename>', methods=['POST'])
 def decrypt_file(filename):
     if 'loggedin' not in session:
         return redirect(url_for('home'))
+    
+    pin = request.form.get('pin') # Ambil PIN dari Modal
+    if not pin:
+        flash('PIN diperlukan untuk membuka file!', 'danger')
+        return redirect(url_for('upload'))
         
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     
     try:
-        # Baca data terenkripsi
+        # 1. Baca File Terenkripsi
         with open(file_path, "rb") as file:
-            encrypted_data = file.read()
+            full_data = file.read()
         
-        # Deskripsi data
+        # 2. Ambil Salt (16 byte pertama) dan Data
+        salt = full_data[:16]
+        encrypted_data = full_data[16:]
+        
+        # 3. Buat Kunci dari PIN User + Salt yg ada di file
+        key, _ = generate_key_from_pin(pin, salt)
+        cipher = Fernet(key)
+        
+        # 4. Coba Dekripsi
         decrypted_data = cipher.decrypt(encrypted_data)
         
-        # Timpa file dengan data asli
-        with open(file_path, "wb") as file:
+        # 5. Kembalikan ke file asli
+        original_filename = filename.replace('.enc', '')
+        original_path = os.path.join(app.config['UPLOAD_FOLDER'], original_filename)
+        
+        with open(original_path, "wb") as file:
             file.write(decrypted_data)
 
-        flash(f'File {filename} berhasil dibuka (UNLOCKED)! 🔓', 'success')
+        # Hapus file .enc & Update Database
+        os.remove(file_path)
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE upload SET filename = %s WHERE filename = %s", (original_filename, filename))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash(f'File berhasil dibuka! PIN Benar.', 'success')
         
+    except InvalidToken:
+        flash('PIN SALAH! File tidak dapat dibuka.', 'danger')
     except Exception as e:
-        flash('Gagal membuka file! Mungkin file belum dikunci atau kunci salah.', 'danger')
+        flash(f'Gagal membuka file: {str(e)}', 'danger')
 
     return redirect(url_for('upload'))
 
-#DELETE FILE
+# DELETE FILE
 @app.route('/delete/<filename>')
 def delete_file(filename):
     if 'loggedin' not in session:
         return redirect(url_for('home'))
 
-    # 1. Hapus dari Database dulu
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("DELETE FROM upload WHERE filename = %s", (filename,))
@@ -227,21 +261,15 @@ def delete_file(filename):
     cur.close()
     conn.close()
 
-    # 2. Hapus File Fisik
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    
     if os.path.exists(file_path):
         os.remove(file_path)
-        flash(f'File {filename} berhasil dihapus permanen!', 'success')
+        flash(f'File {filename} dihapus.', 'success')
     else:
-        # Jika file fisik sudah tidak ada (misal terhapus manual), tidak apa-apa
-        # karena database sudah dibersihkan.
-        flash(f'Data file {filename} dihapus dari database (file fisik tidak ditemukan).', 'warning')
+        flash(f'Data dihapus (file fisik tidak ditemukan).', 'warning')
         
-    # 3. Redirect ke halaman dashboard (upload), BUKAN upload_file
     return redirect(url_for('upload'))
 
-# LOGOUT
 @app.route('/logout')
 def logout():
     session.clear()
